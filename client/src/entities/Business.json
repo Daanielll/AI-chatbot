@@ -1,0 +1,248 @@
+{
+  "name": "Business",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Business name"
+    },
+    "category": {
+      "type": "string",
+      "description": "Business category (e.g., restaurant, salon, fitness, etc.)"
+    },
+    "custom_prompt": {
+      "type": "string",
+      "description": "Custom business-specific prompt data"
+    },
+    "immediate_constraint": {
+      "type": "string",
+      "description": "An immediate, temporary constraint for the chatbot to act upon (e.g., vacation notice)."
+    },
+    "business_hours": {
+      "type": "object",
+      "description": "Operating hours for each day",
+      "properties": {
+        "monday": {
+          "type": "object",
+          "properties": {
+            "open": {
+              "type": "string"
+            },
+            "close": {
+              "type": "string"
+            },
+            "closed": {
+              "type": "boolean"
+            }
+          }
+        },
+        "tuesday": {
+          "type": "object",
+          "properties": {
+            "open": {
+              "type": "string"
+            },
+            "close": {
+              "type": "string"
+            },
+            "closed": {
+              "type": "boolean"
+            }
+          }
+        },
+        "wednesday": {
+          "type": "object",
+          "properties": {
+            "open": {
+              "type": "string"
+            },
+            "close": {
+              "type": "string"
+            },
+            "closed": {
+              "type": "boolean"
+            }
+          }
+        },
+        "thursday": {
+          "type": "object",
+          "properties": {
+            "open": {
+              "type": "string"
+            },
+            "close": {
+              "type": "string"
+            },
+            "closed": {
+              "type": "boolean"
+            }
+          }
+        },
+        "friday": {
+          "type": "object",
+          "properties": {
+            "open": {
+              "type": "string"
+            },
+            "close": {
+              "type": "string"
+            },
+            "closed": {
+              "type": "boolean"
+            }
+          }
+        },
+        "saturday": {
+          "type": "object",
+          "properties": {
+            "open": {
+              "type": "string"
+            },
+            "close": {
+              "type": "string"
+            },
+            "closed": {
+              "type": "boolean"
+            }
+          }
+        },
+        "sunday": {
+          "type": "object",
+          "properties": {
+            "open": {
+              "type": "string"
+            },
+            "close": {
+              "type": "string"
+            },
+            "closed": {
+              "type": "boolean"
+            }
+          }
+        }
+      }
+    },
+    "pricing": {
+      "type": "object",
+      "description": "Pricing configuration",
+      "properties": {
+        "currency": {
+          "type": "string",
+          "default": "USD"
+        },
+        "base_rate": {
+          "type": "number"
+        },
+        "premium_rate": {
+          "type": "number"
+        },
+        "consultation_fee": {
+          "type": "number"
+        }
+      }
+    },
+    "constraints": {
+      "type": "object",
+      "description": "Operational constraints",
+      "properties": {
+        "max_daily_appointments": {
+          "type": "number",
+          "default": 50
+        },
+        "booking_window_days": {
+          "type": "number",
+          "default": 30
+        },
+        "cancellation_hours": {
+          "type": "number",
+          "default": 24
+        },
+        "max_party_size": {
+          "type": "number",
+          "default": 6
+        }
+      }
+    },
+    "notifications": {
+      "type": "object",
+      "description": "Settings for automated customer notifications.",
+      "properties": {
+        "reminders_enabled": {
+          "type": "boolean",
+          "default": true
+        },
+        "reminder_hours_before": {
+          "type": "number",
+          "default": 24
+        },
+        "booking_success_message": {
+          "type": "string",
+          "default": "Your appointment is confirmed! We look forward to seeing you."
+        }
+      }
+    },
+    "integrations": {
+      "type": "object",
+      "description": "Connected accounts",
+      "properties": {
+        "google_account": {
+          "type": "object",
+          "properties": {
+            "connected": {
+              "type": "boolean",
+              "default": false
+            },
+            "email": {
+              "type": "string"
+            },
+            "calendar_id": {
+              "type": "string"
+            }
+          }
+        },
+        "meta_account": {
+          "type": "object",
+          "properties": {
+            "connected": {
+              "type": "boolean",
+              "default": false
+            },
+            "page_id": {
+              "type": "string"
+            },
+            "page_name": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "analytics": {
+      "type": "object",
+      "description": "Business analytics data",
+      "properties": {
+        "total_users": {
+          "type": "number",
+          "default": 0
+        },
+        "weekly_appointments": {
+          "type": "number",
+          "default": 0
+        },
+        "monthly_revenue": {
+          "type": "number",
+          "default": 0
+        },
+        "satisfaction_score": {
+          "type": "number",
+          "default": 0
+        },
+        "response_time": {
+          "type": "number",
+          "default": 0
+        }
+      }
+    }
+  },
+  "required": ["name", "category"]
+}
