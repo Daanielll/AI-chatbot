@@ -85,7 +85,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         {selectedBusiness.name}
                       </p>
                       <p className="text-xs text-gray-500 capitalize">
-                        {selectedBusiness.category.replace("_", " ")}
+                        {selectedBusiness?.category?.replace("_", " ")}
                       </p>
                     </div>
                   </div>

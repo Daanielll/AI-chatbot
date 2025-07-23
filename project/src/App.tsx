@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
-import Sidebar from './components/Sidebar';
-import Analytics from './components/Analytics';
-import Adjustments from './components/Adjustments';
-import Settings from './components/Settings';
-import CreateBusiness from './components/CreateBusiness';
+import React, { useContext, useState } from "react";
+import Sidebar from "./components/Sidebar";
+import Analytics from "./components/Analytics";
+import Adjustments from "./components/Adjustments";
+import Settings from "./components/Settings";
+import CreateBusiness from "./components/CreateBusiness";
+import { AgentContext } from "./contexts/AgentContext";
 
 interface Business {
   id: string;
@@ -11,23 +12,19 @@ interface Business {
   category: string;
 }
 
-const mockBusinesses: Business[] = [
-  { id: '1', name: 'Elegant Hair Salon', category: 'Beauty & Wellness' },
-  { id: '2', name: 'Downtown Dental Care', category: 'Healthcare' },
-  { id: '3', name: 'FitLife Gym', category: 'Fitness' },
-  { id: '4', name: 'Gourmet Bistro', category: 'Restaurant' },
-  { id: '5', name: 'Auto Repair Pro', category: 'Automotive' },
-];
-
 function App() {
-  const [businesses, setBusinesses] = useState<Business[]>(mockBusinesses);
-  const [selectedBusiness, setSelectedBusiness] = useState<Business | null>(null);
-  const [currentPage, setCurrentPage] = useState('analytics');
+  const {
+    allAgents: businesses,
+    agent: selectedBusiness,
+    selectAgent,
+  } = useContext(AgentContext);
+
+  const [currentPage, setCurrentPage] = useState("analytics");
   const [isBusinessDropdownOpen, setIsBusinessDropdownOpen] = useState(false);
   const [showCreateBusiness, setShowCreateBusiness] = useState(false);
 
   const handleSelectBusiness = (business: Business) => {
-    setSelectedBusiness(business);
+    selectAgent(business.id);
   };
 
   const handlePageChange = (page: string) => {
@@ -42,33 +39,21 @@ function App() {
     setShowCreateBusiness(false);
   };
 
-  const handleBusinessCreated = (newBusiness: Business) => {
-    setBusinesses([...businesses, newBusiness]);
-    setSelectedBusiness(newBusiness);
-    setShowCreateBusiness(false);
-    setCurrentPage('analytics');
-  };
-
   const toggleBusinessDropdown = () => {
     setIsBusinessDropdownOpen(!isBusinessDropdownOpen);
   };
 
   const renderCurrentPage = () => {
     if (showCreateBusiness) {
-      return (
-        <CreateBusiness
-          onBack={handleBackFromCreate}
-          onCreateBusiness={handleBusinessCreated}
-        />
-      );
+      return <CreateBusiness onBack={handleBackFromCreate} />;
     }
 
     switch (currentPage) {
-      case 'analytics':
+      case "analytics":
         return <Analytics selectedBusiness={selectedBusiness} />;
-      case 'adjustments':
+      case "adjustments":
         return <Adjustments selectedBusiness={selectedBusiness} />;
-      case 'settings':
+      case "settings":
         return <Settings selectedBusiness={selectedBusiness} />;
       default:
         return <Analytics selectedBusiness={selectedBusiness} />;
@@ -87,11 +72,9 @@ function App() {
         onToggleBusinessDropdown={toggleBusinessDropdown}
         onCreateBusiness={handleCreateBusiness}
       />
-      
+
       {/* Main Content */}
-      <div className="flex-1 flex flex-col">
-        {renderCurrentPage()}
-      </div>
+      <div className="flex-1 flex flex-col">{renderCurrentPage()}</div>
     </div>
   );
 }

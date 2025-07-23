@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import {
   Link,
   Unlink,
@@ -15,6 +15,8 @@ import {
 } from "./ui/card";
 import { Button } from "./ui/button";
 import { Separator } from "./ui/separator";
+import { CalendarConnectButton } from "./google/CalendarConnectButton";
+import { AgentContext } from "@/contexts/AgentContext";
 
 interface Business {
   id: string;
@@ -27,10 +29,11 @@ interface SettingsProps {
 }
 
 const Settings: React.FC<SettingsProps> = ({ selectedBusiness }) => {
+  const { agent } = useContext(AgentContext);
   const [googleAccount, setGoogleAccount] = useState({
-    connected: true,
-    email: "business@example.com",
-    lastSync: "2 hours ago",
+    connected: agent?.google_connections?.length > 0,
+    email: agent?.google_connections?.[0]?.email || "",
+    lastSync: agent?.google_connections?.[0]?.created_at || "",
   });
 
   const [metaAccount, setMetaAccount] = useState({
@@ -164,10 +167,12 @@ const Settings: React.FC<SettingsProps> = ({ selectedBusiness }) => {
                 <p className="text-muted-foreground mb-4">
                   Connect your Google account to enable calendar integration
                 </p>
-                <Button onClick={handleConnectGoogle} className="mx-auto">
-                  <Link className="h-4 w-4 mr-2" />
-                  Connect Google Account
-                </Button>
+                <CalendarConnectButton>
+                  <Button onClick={handleConnectGoogle} className="mx-auto">
+                    <Link className="h-4 w-4 mr-2" />
+                    Connect Google Account
+                  </Button>
+                </CalendarConnectButton>
               </div>
             )}
           </CardContent>
