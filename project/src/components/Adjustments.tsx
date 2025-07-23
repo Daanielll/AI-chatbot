@@ -1,13 +1,15 @@
 import React from "react";
+import { useForm, useFieldArray } from "react-hook-form";
 import {
   Clock,
   DollarSign,
   AlertCircle,
-  Save,
   Zap,
   Bell,
   X,
   Tag,
+  Trash2,
+  Plus,
 } from "lucide-react";
 import { Label } from "@radix-ui/react-label";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
@@ -23,39 +25,35 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
+import { AdjustmentsProps, FormData } from "../types/type";
 
-interface Business {
-  id: string;
-  name: string;
-  category: string;
-}
+const days = [
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+  "saturday",
+  "sunday",
+] as const;
 
-interface AdjustmentsProps {
-  selectedBusiness: Business | null;
-}
-
-// Mock data for all states
-const mockData = {
+const data: FormData = {
   businessHours: {
-    monday: { open: "09:00", close: "17:00", closed: false },
-    tuesday: { open: "09:00", close: "17:00", closed: false },
-    wednesday: { open: "09:00", close: "17:00", closed: false },
-    thursday: { open: "09:00", close: "17:00", closed: false },
-    friday: { open: "09:00", close: "17:00", closed: false },
-    saturday: { open: "10:00", close: "15:00", closed: false },
-    sunday: { open: "10:00", close: "15:00", closed: true },
+    monday: [
+      { open: "09:00", close: "12:00" },
+      { open: "13:00", close: "17:00" },
+    ],
+    tuesday: [{ open: "09:00", close: "17:00" }],
+    wednesday: [{ open: "09:00", close: "17:00" }],
+    thursday: [{ open: "09:00", close: "17:00" }],
+    friday: [{ open: "09:00", close: "17:00" }],
+    saturday: [{ open: "10:00", close: "15:00" }],
+    sunday: [{ open: "10:00", close: "15:00" }],
   },
   pricing: {
-    basePrice: "50",
-    maxDiscount: "20",
-    rushHourMultiplier: "1.5",
+    services: [],
   },
-  constraints: {
-    maxDailyAppointments: "50",
-    minAdvanceBooking: "1",
-    maxAdvanceBooking: "30",
-    cancellationWindow: "24",
-  },
+
   businessData: {
     description: "Professional salon services with experienced stylists",
     specialties: "Hair cuts, coloring, styling, treatments",
@@ -70,26 +68,74 @@ const mockData = {
     },
     { id: "2", text: "No walk-ins accepted this week", timestamp: "1 day ago" },
   ],
+  remindersEnabled: false,
+  reminderHoursBefore: "24",
+  bookingSuccessMessage: "Your booking was successful!",
+  category: "salon",
 };
 
-const days = [
-  "monday",
-  "tuesday",
-  "wednesday",
-  "thursday",
-  "friday",
-  "saturday",
-  "sunday",
+const categories = [
+  { value: "salon", label: "Salon" },
+  { value: "spa", label: "Spa" },
+  { value: "clinic", label: "Clinic" },
 ];
 
 const Adjustments: React.FC<AdjustmentsProps> = ({ selectedBusiness }) => {
-  // All data comes from mockData
-  const businessHours = mockData.businessHours;
-  const pricing = mockData.pricing;
-  const constraints = mockData.constraints;
-  const businessData = mockData.businessData;
-  const immediateConstraint = mockData.immediateConstraint;
-  const activeConstraints = mockData.activeConstraints;
+  const {
+    register,
+    control,
+    handleSubmit,
+    watch,
+    setValue,
+    getValues,
+    reset,
+    formState: { isDirty },
+  } = useForm<FormData>({
+    defaultValues: {
+      ...data,
+    },
+  });
+
+  const {
+    fields: serviceFields,
+    append: appendService,
+    remove: removeService,
+  } = useFieldArray({
+    control,
+    name: "pricing.services",
+  });
+
+  const {
+    fields: constraintFields,
+    append: appendConstraint,
+    remove: removeConstraint,
+  } = useFieldArray({
+    control,
+    name: "activeConstraints",
+  });
+
+  const watchedValues = watch();
+
+  const onReset = () => {
+    reset(data);
+  };
+
+  const handleImmediateConstraintApply = () => {
+    const immediateConstraint = getValues("immediateConstraint");
+    if (immediateConstraint.trim()) {
+      appendConstraint({
+        id: Date.now().toString(),
+        text: immediateConstraint,
+        timestamp: "just now",
+      });
+      setValue("immediateConstraint", "");
+    }
+  };
+
+  const onSubmit = (data: FormData) => {
+    console.log("Form data:", data);
+    alert("Changes saved!");
+  };
 
   if (!selectedBusiness) {
     return (
@@ -111,7 +157,7 @@ const Adjustments: React.FC<AdjustmentsProps> = ({ selectedBusiness }) => {
 
   return (
     <div className="flex-1 p-8 bg-gray-50">
-      <div className="flex flex-col gap-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
             {selectedBusiness.name}
@@ -141,25 +187,24 @@ const Adjustments: React.FC<AdjustmentsProps> = ({ selectedBusiness }) => {
             <div className="space-y-4">
               <div className="flex gap-3">
                 <Input
-                  type="text"
-                  value={immediateConstraint}
+                  {...register("immediateConstraint")}
                   placeholder="e.g., I'm going on vacation for a week, Cancel all appointments today"
-                  disabled
                 />
                 <Button
-                  disabled
+                  type="button"
                   variant="default"
-                  className="opacity-50 cursor-not-allowed"
+                  onClick={handleImmediateConstraintApply}
+                  disabled={!watchedValues.immediateConstraint?.trim()}
                 >
                   Apply Now
                 </Button>
               </div>
-              {activeConstraints.length > 0 && (
+              {constraintFields.length > 0 && (
                 <div className="space-y-2">
                   <h4 className="text-sm font-medium text-gray-700">
                     Active Constraints:
                   </h4>
-                  {activeConstraints.map((constraint) => (
+                  {constraintFields.map((constraint, index) => (
                     <div
                       key={constraint.id}
                       className="flex items-center justify-between p-3 bg-orange-50 border border-orange-200 rounded-lg"
@@ -173,10 +218,11 @@ const Adjustments: React.FC<AdjustmentsProps> = ({ selectedBusiness }) => {
                         </p>
                       </div>
                       <Button
+                        type="button"
                         variant="ghost"
                         size="icon"
-                        disabled
-                        className="text-orange-600 opacity-50 cursor-not-allowed"
+                        onClick={() => removeConstraint(index)}
+                        className="text-orange-600"
                       >
                         <X className="h-4 w-4" />
                       </Button>
@@ -206,14 +252,17 @@ const Adjustments: React.FC<AdjustmentsProps> = ({ selectedBusiness }) => {
               >
                 Category
               </Label>
-              <Select disabled value="test">
+              <Select
+                value={watchedValues.category || data.category}
+                onValueChange={(value) => setValue("category", value)}
+              >
                 <SelectTrigger id="category" className="mt-1">
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
                 <SelectContent>
-                  {[1, 2, 3].map((c) => (
-                    <SelectItem key={c} value={String(c)}>
-                      {c}
+                  {categories.map((c) => (
+                    <SelectItem key={c.value} value={c.value}>
+                      {c.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -221,15 +270,14 @@ const Adjustments: React.FC<AdjustmentsProps> = ({ selectedBusiness }) => {
             </div>
             <div>
               <Label
-                htmlFor="prompt"
+                htmlFor="description"
                 className="text-sm font-medium text-gray-700"
               >
                 Custom Business Data
               </Label>
               <Textarea
-                id="prompt"
-                value={businessData.description}
-                disabled
+                {...register("businessData.description")}
+                id="description"
                 placeholder="Add specific information about your business, services, policies, etc."
                 className="mt-1 min-h-[120px]"
               />
@@ -253,7 +301,13 @@ const Adjustments: React.FC<AdjustmentsProps> = ({ selectedBusiness }) => {
                 Appointment Reminders
               </Label>
               <div className="flex items-center space-x-2 mt-2 p-3 bg-gray-50 rounded-lg border">
-                <Switch id="reminders_enabled" checked={false} disabled />
+                <Switch
+                  id="reminders_enabled"
+                  checked={watchedValues.remindersEnabled}
+                  onCheckedChange={(checked) =>
+                    setValue("remindersEnabled", checked)
+                  }
+                />
                 <Label htmlFor="reminders_enabled" className="cursor-pointer">
                   Enable automatic reminders
                 </Label>
@@ -263,10 +317,9 @@ const Adjustments: React.FC<AdjustmentsProps> = ({ selectedBusiness }) => {
                   Send reminder (hours before)
                 </Label>
                 <Input
+                  {...register("reminderHoursBefore")}
                   id="reminder_hours_before"
                   type="number"
-                  value="test"
-                  disabled
                   className="mt-1 w-32"
                 />
               </div>
@@ -277,9 +330,8 @@ const Adjustments: React.FC<AdjustmentsProps> = ({ selectedBusiness }) => {
                 Booking Success Message
               </Label>
               <Textarea
+                {...register("bookingSuccessMessage")}
                 id="booking_success_message"
-                value="test"
-                disabled
                 className="mt-1"
               />
             </div>
@@ -299,49 +351,105 @@ const Adjustments: React.FC<AdjustmentsProps> = ({ selectedBusiness }) => {
           <CardContent>
             <div className="space-y-4">
               {days.map((day) => (
-                <div key={day} className="flex items-center gap-4">
-                  <div className="w-24">
-                    <Label className="text-sm font-medium text-gray-700 capitalize">
-                      {day}
-                    </Label>
+                <div key={day} className="flex flex-col gap-2">
+                  <div className="flex items-center gap-4">
+                    <div className="w-full group">
+                      <Label className="text-sm font-medium text-gray-700 capitalize flex gap-3">
+                        {day}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const ranges = [
+                              ...(watchedValues.businessHours?.[day] || []),
+                            ];
+                            ranges.push({
+                              open: "09:00",
+                              close: "17:00",
+                            });
+                            setValue(`businessHours.${day}`, ranges);
+                          }}
+                          className="text-xs bg-secondary text-muted-foreground p-[2px] px-2 rounded-full opacity-0 group-hover:opacity-100 duration-200"
+                        >
+                          + Add
+                        </button>
+                      </Label>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex gap-4 ">
                     <Switch
-                      checked={
-                        !businessHours[day as keyof typeof businessHours].closed
+                      checked={watch(`businessHours.${day}`)?.length !== 0}
+                      onCheckedChange={() =>
+                        watch(`businessHours.${day}`)?.length !== 0
+                          ? setValue(`businessHours.${day}`, [], {
+                              shouldDirty: true,
+                            })
+                          : setValue(
+                              `businessHours.${day}`,
+                              [{ open: "09:00", close: "17:00" }],
+                              { shouldDirty: true }
+                            )
                       }
-                      disabled
+                      className="mt-2"
                     />
-                    <span className="text-sm text-gray-500">Open</span>
+                    <div className="flex gap-4 flex-col">
+                      {watchedValues.businessHours?.[day]?.map(
+                        (range, rangeIdx) => (
+                          <div
+                            key={rangeIdx}
+                            className="flex items-center gap-2"
+                          >
+                            <span className="text-sm text-gray-500">Open</span>
+                            {range && (
+                              <>
+                                <Input
+                                  {...register(
+                                    `businessHours.${day}.${rangeIdx}.open`
+                                  )}
+                                  type="time"
+                                  className="w-32"
+                                />
+                                <span className="text-gray-500">to</span>
+                                <Input
+                                  {...register(
+                                    `businessHours.${day}.${rangeIdx}.close`
+                                  )}
+                                  type="time"
+                                  className="w-32"
+                                />
+                              </>
+                            )}
+                            {rangeIdx !== 0 && (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => {
+                                  const ranges = [
+                                    ...(watchedValues.businessHours?.[day] ||
+                                      []),
+                                  ];
+                                  ranges.splice(rangeIdx, 1);
+                                  setValue(`businessHours.${day}`, ranges, {
+                                    shouldDirty: true,
+                                  });
+                                }}
+                                className="text-gray-400 hover:text-red-500 hover:bg-red-50"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            )}
+                          </div>
+                        )
+                      )}
+                    </div>
                   </div>
-                  {!businessHours[day as keyof typeof businessHours].closed && (
-                    <>
-                      <Input
-                        type="time"
-                        value={
-                          businessHours[day as keyof typeof businessHours].open
-                        }
-                        disabled
-                        className="w-32"
-                      />
-                      <span className="text-gray-500">to</span>
-                      <Input
-                        type="time"
-                        value={
-                          businessHours[day as keyof typeof businessHours].close
-                        }
-                        disabled
-                        className="w-32"
-                      />
-                    </>
-                  )}
                 </div>
               ))}
             </div>
           </CardContent>
         </Card>
 
-        {/* Pricing */}
+        {/* Pricing & Services */}
         <Card className="border-gray-200">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -349,48 +457,11 @@ const Adjustments: React.FC<AdjustmentsProps> = ({ selectedBusiness }) => {
               <span className="text-2xl font-bold text-gray-900">Pricing</span>
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <Label className="block text-sm font-medium text-gray-700 mb-2">
-                  Base Price ($)
-                </Label>
-                <Input type="number" value={pricing.basePrice} disabled />
-              </div>
-              <div>
-                <Label className="block text-sm font-medium text-gray-700 mb-2">
-                  Max Discount (%)
-                </Label>
-                <Input type="number" value={pricing.maxDiscount} disabled />
-              </div>
-              <div>
-                <Label className="block text-sm font-medium text-gray-700 mb-2">
-                  Rush Hour Multiplier
-                </Label>
-                <Input
-                  type="number"
-                  step="0.1"
-                  value={pricing.rushHourMultiplier}
-                  disabled
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* t */}
-        <Card className="border-gray-200">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <DollarSign className="w-5 h-5" />
-              Pricing & Services
-            </CardTitle>
-          </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-3">
-              {(businessData.pricing.services || []).map((service, index) => (
+              {serviceFields.map((service, index) => (
                 <div
-                  key={index}
+                  key={service.id}
                   className="grid grid-cols-1 md:grid-cols-[1fr_100px_120px_auto] gap-3 items-end p-3 bg-gray-50 rounded-lg border"
                 >
                   <div>
@@ -398,11 +469,8 @@ const Adjustments: React.FC<AdjustmentsProps> = ({ selectedBusiness }) => {
                       Service Name
                     </Label>
                     <Input
+                      {...register(`pricing.services.${index}.name`)}
                       id={`serviceName-${index}`}
-                      value={service.name || ""}
-                      onChange={(e) =>
-                        handleServiceChange(index, "name", e.target.value)
-                      }
                       className="mt-1 bg-white"
                     />
                   </div>
@@ -414,16 +482,11 @@ const Adjustments: React.FC<AdjustmentsProps> = ({ selectedBusiness }) => {
                       Price (USD)
                     </Label>
                     <Input
+                      {...register(`pricing.services.${index}.price`, {
+                        valueAsNumber: true,
+                      })}
                       id={`servicePrice-${index}`}
                       type="number"
-                      value={service.price || 0}
-                      onChange={(e) =>
-                        handleServiceChange(
-                          index,
-                          "price",
-                          parseFloat(e.target.value) || 0
-                        )
-                      }
                       className="mt-1 bg-white"
                     />
                   </div>
@@ -435,20 +498,16 @@ const Adjustments: React.FC<AdjustmentsProps> = ({ selectedBusiness }) => {
                       Duration (min)
                     </Label>
                     <Input
+                      {...register(`pricing.services.${index}.duration`, {
+                        valueAsNumber: true,
+                      })}
                       id={`serviceDuration-${index}`}
                       type="number"
-                      value={service.duration || 0}
-                      onChange={(e) =>
-                        handleServiceChange(
-                          index,
-                          "duration",
-                          parseInt(e.target.value) || 0
-                        )
-                      }
                       className="mt-1 bg-white"
                     />
                   </div>
                   <Button
+                    type="button"
                     variant="ghost"
                     size="icon"
                     onClick={() => removeService(index)}
@@ -461,8 +520,11 @@ const Adjustments: React.FC<AdjustmentsProps> = ({ selectedBusiness }) => {
 
               <div className="p-3 border-2 border-dashed border-gray-300 rounded-lg hover:border-gray-400 transition-colors">
                 <Button
+                  type="button"
                   variant="ghost"
-                  onClick={addService}
+                  onClick={() =>
+                    appendService({ name: "", price: 0, duration: 0 })
+                  }
                   className="w-full text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                 >
                   <Plus className="w-4 h-4 mr-2" />
@@ -470,7 +532,7 @@ const Adjustments: React.FC<AdjustmentsProps> = ({ selectedBusiness }) => {
                 </Button>
               </div>
 
-              {(businessData.pricing.services || []).length === 0 && (
+              {serviceFields.length === 0 && (
                 <p className="text-sm text-gray-500 text-center py-4">
                   No services added yet. Click "Add New Service" to get started.
                 </p>
@@ -478,74 +540,36 @@ const Adjustments: React.FC<AdjustmentsProps> = ({ selectedBusiness }) => {
             </div>
           </CardContent>
         </Card>
-
-        {/* Operational Constraints */}
-        <Card className="border-gray-200">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <AlertCircle className="h-5 w-5 text-gray-600" />
-              <span className="text-2xl font-bold text-gray-900">
-                Operational Constraints
+        {/* Save changes */}
+        <div
+          className={`fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-white/50 backdrop-blur-md rounded-2xl shadow-xl px-4 py-3 transition-all duration-300 ease-in-out w-fit border ${
+            isDirty
+              ? "translate-y-0 opacity-100"
+              : "translate-y-4 opacity-0 pointer-events-none"
+          }`}
+        >
+          <div className="flex items-center gap-12">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium">
+                Caution! You have unsaved changes.
               </span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label className="block text-sm font-medium text-gray-700 mb-2">
-                  Max Daily Appointments
-                </Label>
-                <Input
-                  type="number"
-                  value={constraints.maxDailyAppointments}
-                  disabled
-                />
-              </div>
-              <div>
-                <Label className="block text-sm font-medium text-gray-700 mb-2">
-                  Min Advance Booking (hours)
-                </Label>
-                <Input
-                  type="number"
-                  value={constraints.minAdvanceBooking}
-                  disabled
-                />
-              </div>
-              <div>
-                <Label className="block text-sm font-medium text-gray-700 mb-2">
-                  Max Advance Booking (days)
-                </Label>
-                <Input
-                  type="number"
-                  value={constraints.maxAdvanceBooking}
-                  disabled
-                />
-              </div>
-              <div>
-                <Label className="block text-sm font-medium text-gray-700 mb-2">
-                  Cancellation Window (hours)
-                </Label>
-                <Input
-                  type="number"
-                  value={constraints.cancellationWindow}
-                  disabled
-                />
-              </div>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Save Button */}
-        <div className="flex justify-end">
-          <Button
-            disabled
-            className="flex items-center gap-2 opacity-50 cursor-not-allowed"
-          >
-            <Save className="h-4 w-4" />
-            Save Changes
-          </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="ghost"
+                disabled={!isDirty}
+                onClick={onReset}
+                type="button"
+              >
+                Reset
+              </Button>
+              <Button disabled={!isDirty} type="submit">
+                Save
+              </Button>
+            </div>
+          </div>
         </div>
-      </div>
+      </form>
     </div>
   );
 };
