@@ -14,7 +14,8 @@ export const CalendarConnectButton = ({ children }) => {
     onSuccess: async (codeResponse) => {
       const { code } = codeResponse;
       const body = { code, account_id: userId, chatbot_id: agent?.id };
-      await updateGoogleCredentials(body);
+      const response = await updateGoogleCredentials(body);
+      console.log(response, "response");
     },
     onError: (error) => console.error("Login failed", error),
   });

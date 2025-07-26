@@ -17,6 +17,7 @@ import { Button } from "./ui/button";
 import { Separator } from "./ui/separator";
 import { CalendarConnectButton } from "./google/CalendarConnectButton";
 import { AgentContext } from "@/contexts/AgentContext";
+import { deleteGoogleCredentials } from "@/api/google";
 
 interface Business {
   id: string;
@@ -47,12 +48,13 @@ const Settings: React.FC<SettingsProps> = ({ selectedBusiness }) => {
     console.log("Connecting Google account...");
   };
 
-  const handleDisconnectGoogle = () => {
+  const handleDisconnectGoogle = async () => {
     setGoogleAccount({
       connected: false,
       email: "",
       lastSync: "",
     });
+    await deleteGoogleCredentials({ chatbot_id: agent?.id });
   };
 
   const handleConnectMeta = () => {
@@ -168,7 +170,7 @@ const Settings: React.FC<SettingsProps> = ({ selectedBusiness }) => {
                   Connect your Google account to enable calendar integration
                 </p>
                 <CalendarConnectButton>
-                  <Button onClick={handleConnectGoogle} className="mx-auto">
+                  <Button className="mx-auto">
                     <Link className="h-4 w-4 mr-2" />
                     Connect Google Account
                   </Button>
